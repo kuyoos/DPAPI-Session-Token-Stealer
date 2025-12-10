@@ -1,4 +1,4 @@
-name: Go Build (Windows Cross Compile)
+name: Go Build (Intel x86/x64 Windows)
 
 on:
   push:
@@ -7,34 +7,40 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-windows:
+  build-intel-windows:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v5  # 升级到v5，兼容性更好
+      uses: actions/setup-go@v5
       with:
-        go-version: '1.22'      # 与go.mod一致的版本（简写）
+        go-version: '1.22'
         cache: true
 
-    - name: Install Cross Compile Dependencies (mingw-w64)
+    # 安装 Intel 32/64位交叉编译依赖（mingw-w64 包含 32/64位工具链）
+    - name: Install MinGW-w64 (Intel x86/x64)
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-mingw-w64-x86-64 make  # 安装Windows交叉编译工具链
+        # 安装 64位+32位 mingw 工具链
+        sudo apt-get install -y gcc-mingw-w64-x86-64 gcc-mingw-w64-i686 make
 
     - name: Install Go Dependencies
       run: go mod tidy
 
-    - name: Create Build Directory
-      run: mkdir -p bin  # 确保bin目录存在
+    # 编译 Intel 64位 + 32位
+    - name: Build Intel 64bit (amd64) + 32bit (386)
+      run: make build-all
 
-    - name: Build Windows Executable (Cross Compile)
-      run: make build
-
-    # 可选：上传编译产物（方便下载）
-    - name: Upload Build Artifact
+    # 上传两个版本的产物（方便下载）
+    - name: Upload Intel 64bit Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: cookie-windows-amd64
-        path: bin/cookie.exe
+        name: cookie-intel-amd64
+        path: bin/cookie-amd64.exe
+
+    - name: Upload Intel 32bit Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cookie-intel-x86
+        path: bin/cookie-x86.exe
