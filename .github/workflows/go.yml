@@ -1,4 +1,4 @@
-name: Go Build with Make
+name: Go Build (Windows Cross Compile)
 
 on:
   push:
@@ -7,22 +7,34 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-windows:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5  # 升级到v5，兼容性更好
       with:
-        go-version: '1.22'  # 改为与go.mod一致的简写版本（移除补丁号）
+        go-version: '1.22'      # 与go.mod一致的版本（简写）
         cache: true
 
-    - name: Install Dependencies (go mod tidy)
+    - name: Install Cross Compile Dependencies (mingw-w64)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-mingw-w64-x86-64 make  # 安装Windows交叉编译工具链
+
+    - name: Install Go Dependencies
       run: go mod tidy
 
-    - name: Ensure make is available
-      run: sudo apt-get update && sudo apt-get install -y make
+    - name: Create Build Directory
+      run: mkdir -p bin  # 确保bin目录存在
 
-    - name: Build the Project (make build)
+    - name: Build Windows Executable (Cross Compile)
       run: make build
+
+    # 可选：上传编译产物（方便下载）
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cookie-windows-amd64
+        path: bin/cookie.exe
