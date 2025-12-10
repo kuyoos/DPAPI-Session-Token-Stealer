@@ -1,4 +1,4 @@
-name: Go Build (Intel x86/x64 Windows)
+name: Go Build (Intel x64 Windows)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-intel-windows:
+  build-intel-amd64:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -18,29 +18,19 @@ jobs:
         go-version: '1.22'
         cache: true
 
-    # 安装 Intel 32/64位交叉编译依赖（mingw-w64 包含 32/64位工具链）
-    - name: Install MinGW-w64 (Intel x86/x64)
+    - name: Install MinGW-w64 (Intel x64)
       run: |
         sudo apt-get update
-        # 安装 64位+32位 mingw 工具链
-        sudo apt-get install -y gcc-mingw-w64-x86-64 gcc-mingw-w64-i686 make
+        sudo apt-get install -y gcc-mingw-w64-x86-64 make
 
     - name: Install Go Dependencies
       run: go mod tidy
 
-    # 编译 Intel 64位 + 32位
-    - name: Build Intel 64bit (amd64) + 32bit (386)
-      run: make build-all
+    - name: Build Intel 64bit (amd64)
+      run: make build
 
-    # 上传两个版本的产物（方便下载）
     - name: Upload Intel 64bit Artifact
       uses: actions/upload-artifact@v4
       with:
         name: cookie-intel-amd64
         path: bin/cookie-amd64.exe
-
-    - name: Upload Intel 32bit Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: cookie-intel-x86
-        path: bin/cookie-x86.exe
